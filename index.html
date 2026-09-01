@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Visited: US &amp; Canada</title>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem("visitedMap.test.pageTheme");
+      document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -13,12 +23,14 @@
 </header>
 
 <div class="controls">
-  <label for="theme-select">Color scheme:</label>
+  <label for="theme-select">Palette:</label>
   <select id="theme-select"></select>
 
   <span class="stat" id="stat-count"></span>
 
-  <button id="reset-btn" type="button">Reset all</button>
+  <button id="reset-btn" type="button">Clear selection</button>
+
+  <button id="page-theme-btn" type="button" aria-pressed="false"></button>
 </div>
 
 <main>

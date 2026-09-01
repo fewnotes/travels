@@ -1,11 +1,29 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
+  --bg: #14171a;
+  --fg: #edf0ec;
+  --muted: #9aa39c;
+  --border: #33372f;
+  --panel-bg: #1e2220;
+  --panel-hover: #282c29;
+  --unvisited-fill: #262a26;
+  --unvisited-stroke: #3c423c;
+  --label-fill: #f2f2ee;
+  --label-halo: rgba(10, 12, 10, 0.7);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
   --bg: #f7f6f3;
   --fg: #1f2320;
   --muted: #6b7268;
   --border: #d8d5cc;
+  --panel-bg: #ffffff;
+  --panel-hover: #eeeeee;
   --unvisited-fill: #e4e1d8;
   --unvisited-stroke: #b7b2a4;
+  --label-fill: #222222;
+  --label-halo: rgba(255, 255, 255, 0.75);
 }
 
 * { box-sizing: border-box; }
@@ -15,6 +33,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--fg);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 header {
@@ -53,13 +72,17 @@ header h1 {
   padding: 0.4rem 0.7rem;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--panel-bg);
   color: var(--fg);
   cursor: pointer;
 }
 
 .controls button:hover {
-  background: #eee;
+  background: var(--panel-hover);
+}
+
+#page-theme-btn {
+  margin-left: 0.25rem;
 }
 
 .stat {
@@ -102,16 +125,16 @@ main {
 }
 
 .state-path.selected {
-  stroke: #222;
+  stroke: var(--fg);
   stroke-width: 2.25;
 }
 
 .region-label {
   font-size: 7px;
   font-weight: 600;
-  fill: #222;
+  fill: var(--label-fill);
   paint-order: stroke;
-  stroke: rgba(255, 255, 255, 0.75);
+  stroke: var(--label-halo);
   stroke-width: 2.5px;
   stroke-linejoin: round;
   text-anchor: middle;

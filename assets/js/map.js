@@ -3,6 +3,7 @@
 
   var DATA_URL = "assets/data/us-canada.geojson";
   var THEME_KEY = "visitedMap.test.theme";
+  var PAGE_THEME_KEY = "visitedMap.test.pageTheme";
 
   // ---------------------------------------------------------------------
   // Hardcoded list of visited regions. Edit this to reflect real visits.
@@ -60,6 +61,7 @@
   var tooltip = document.getElementById("tooltip");
   var svg = d3.select("#map");
   var mapWrap = document.getElementById("map-wrap");
+  var pageThemeBtn = document.getElementById("page-theme-btn");
 
   populateThemeSelect();
   themeSelect.value = currentTheme;
@@ -70,9 +72,16 @@
     applyColors();
   });
 
-  clearBtn.textContent = "Clear selection";
   clearBtn.addEventListener("click", function () {
     setSelected(null);
+  });
+
+  updatePageThemeBtn();
+  pageThemeBtn.addEventListener("click", function () {
+    var next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    savePageTheme(next);
+    updatePageThemeBtn();
   });
 
   d3.json(DATA_URL).then(function (geo) {
@@ -185,6 +194,18 @@
   function saveTheme(id) {
     try {
       localStorage.setItem(THEME_KEY, id);
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function updatePageThemeBtn() {
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    pageThemeBtn.textContent = isLight ? "☾ Dark mode" : "☀ Light mode";
+    pageThemeBtn.setAttribute("aria-pressed", String(!isLight));
+  }
+
+  function savePageTheme(value) {
+    try {
+      localStorage.setItem(PAGE_THEME_KEY, value);
     } catch (e) { /* storage unavailable */ }
   }
 })();
