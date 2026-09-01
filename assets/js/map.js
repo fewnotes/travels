@@ -36,6 +36,7 @@
     "US-South-Dakota": "SD", "US-Tennessee": "TN", "US-Texas": "TX", "US-Utah": "UT",
     "US-Vermont": "VT", "US-Virginia": "VA", "US-Washington": "WA",
     "US-West-Virginia": "WV", "US-Wisconsin": "WI", "US-Wyoming": "WY",
+    "US-Alaska": "AK", "US-Hawaii": "HI",
     "CA-Alberta": "AB", "CA-British-Columbia": "BC", "CA-Manitoba": "MB",
     "CA-New-Brunswick": "NB", "CA-Newfoundland-and-Labrador": "NL",
     "CA-Northwest-Territories": "NT", "CA-Nova-Scotia": "NS", "CA-Nunavut": "NU",
@@ -57,11 +58,11 @@
 
   var themeSelect = document.getElementById("theme-select");
   var statCount = document.getElementById("stat-count");
-  var clearBtn = document.getElementById("reset-btn");
   var tooltip = document.getElementById("tooltip");
   var svg = d3.select("#map");
   var mapWrap = document.getElementById("map-wrap");
   var pageThemeBtn = document.getElementById("page-theme-btn");
+  var totalByCountry = { US: 0, CA: 0 };
 
   populateThemeSelect();
   themeSelect.value = currentTheme;
@@ -70,10 +71,6 @@
     currentTheme = themeSelect.value;
     saveTheme(currentTheme);
     applyColors();
-  });
-
-  clearBtn.addEventListener("click", function () {
-    setSelected(null);
   });
 
   updatePageThemeBtn();
@@ -86,17 +83,48 @@
 
   d3.json(DATA_URL).then(function (geo) {
     var width = 960;
-    var height = 600;
+    var mainHeight = 600;
+    var height = mainHeight + 85; // extra strip below the mainland for AK/HI insets
     svg.attr("viewBox", "0 0 " + width + " " + height);
 
-    var projection = d3.geoAlbers()
+    // Mainland projection covers the lower 48 US states, DC, and Canada.
+    var mainProjection = d3.geoAlbers()
       .rotate([96, 0])
       .center([0, 45])
       .parallels([40, 55])
       .scale(700)
-      .translate([width / 2, height / 2]);
+      .translate([width / 2, mainHeight / 2]);
 
-    var path = d3.geoPath().projection(projection);
+    // Alaska and Hawaii are geographically distant, so they get their own
+    // small inset projections (same rotate/parallels d3.geoAlbersUsa uses),
+    // tucked into the strip below the mainland.
+    var akProjection = d3.geoConicEqualArea()
+      .rotate([154, 0])
+      .center([-2, 58.5])
+      .parallels([55, 65])
+      .scale(230)
+      .translate([335, 625]);
+
+    var hiProjection = d3.geoConicEqualArea()
+      .rotate([157, 0])
+      .center([-3, 19.9])
+      .parallels([8, 18])
+      .scale(600)
+      .translate([460, 645]);
+
+    var mainPath = d3.geoPath().projection(mainProjection);
+    var akPath = d3.geoPath().projection(akProjection);
+    var hiPath = d3.geoPath().projection(hiProjection);
+
+    function pathFor(d) {
+      if (d.id === "US-Alaska") return akPath;
+      if (d.id === "US-Hawaii") return hiPath;
+      return mainPath;
+    }
+
+    geo.features.forEach(function (d) {
+      totalByCountry[d.properties.country] = (totalByCountry[d.properties.country] || 0) + 1;
+    });
 
     var regions = svg.append("g").attr("class", "regions");
 
@@ -106,7 +134,7 @@
       .append("path")
       .attr("class", "state-path")
       .attr("id", function (d) { return "region-" + d.id; })
-      .attr("d", path)
+      .attr("d", function (d) { return pathFor(d)(d); })
       .on("click", function (event, d) {
         onRegionClick(d);
       })
@@ -123,7 +151,7 @@
       .append("text")
       .attr("class", "region-label")
       .attr("transform", function (d) {
-        var c = path.centroid(d);
+        var c = pathFor(d).centroid(d);
         return "translate(" + c[0] + "," + c[1] + ")";
       })
       .text(function (d) { return REGION_CODES[d.id] || ""; });
@@ -159,7 +187,14 @@
   }
 
   function updateStat() {
-    statCount.textContent = visited.size + " of 62 regions visited";
+    var visitedUS = 0, visitedCA = 0;
+    visited.forEach(function (id) {
+      if (id.indexOf("US-") === 0) visitedUS++;
+      else if (id.indexOf("CA-") === 0) visitedCA++;
+    });
+    statCount.textContent =
+      "US: " + visitedUS + "/" + totalByCountry.US +
+      " | Canada: " + visitedCA + "/" + totalByCountry.CA;
   }
 
   function showTooltip(event, d) {
