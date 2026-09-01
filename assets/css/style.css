@@ -3,6 +3,7 @@
   --bg: #14171a;
   --fg: #edf0ec;
   --muted: #9aa39c;
+  --accent: #4fb8d9;
   --border: #33372f;
   --panel-bg: #1e2220;
   --panel-hover: #282c29;
@@ -17,6 +18,7 @@
   --bg: #f7f6f3;
   --fg: #1f2320;
   --muted: #6b7268;
+  --accent: #1f6f8b;
   --border: #d8d5cc;
   --panel-bg: #ffffff;
   --panel-hover: #eeeeee;
@@ -30,7 +32,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Lora', Georgia, 'Times New Roman', serif;
   background: var(--bg);
   color: var(--fg);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -43,8 +45,8 @@ body {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border);
 }
-.site-header nav a { margin-left: 1.25rem; color: var(--muted); text-decoration: none; font-size: 0.95rem; }
-.site-header nav a:hover { color: var(--fg); }
+.site-header nav a { margin-left: 1.25rem; color: var(--muted); text-decoration: none; }
+.site-header nav a:hover { color: var(--accent); }
 
 .map-header {
   padding: 1.5rem 1.25rem 0.5rem;
@@ -102,6 +104,10 @@ body {
 .seg-switch button {
   border: none;
   border-radius: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
 }
 
 .seg-switch button:first-child {
