@@ -19,16 +19,21 @@
 <body>
 <header>
   <h1>Places I've Visited</h1>
-  <p class="subtitle">US States &amp; Canadian Provinces/Territories</p>
+  <p class="subtitle" id="subtitle">US States &amp; Canadian Provinces/Territories</p>
 </header>
 
 <div class="controls">
+  <div class="seg-switch" role="group" aria-label="Map view">
+    <button id="view-state-btn" type="button" data-view-choice="state">States &amp; Provinces</button>
+    <button id="view-world-btn" type="button" data-view-choice="world">Countries</button>
+  </div>
+
   <label for="theme-select">Palette:</label>
   <select id="theme-select"></select>
 
   <span class="stat" id="stat-count"></span>
 
-  <div class="theme-switch" role="group" aria-label="Page theme">
+  <div class="seg-switch" role="group" aria-label="Page theme">
     <button id="theme-light-btn" type="button" data-theme-choice="light">☀ Light</button>
     <button id="theme-dark-btn" type="button" data-theme-choice="dark">☾ Dark</button>
   </div>
@@ -42,7 +47,7 @@
 </main>
 
 <footer>
-  <p>Data: US boundaries via <a href="https://github.com/topojson/us-atlas" target="_blank" rel="noopener">us-atlas</a> (ISC, US Census Bureau); Canadian boundaries via <a href="https://github.com/codeforgermany/click_that_hood" target="_blank" rel="noopener">click_that_hood</a> (MIT).</p>
+  <p>Data: US boundaries via <a href="https://github.com/topojson/us-atlas" target="_blank" rel="noopener">us-atlas</a> (ISC, US Census Bureau); Canadian boundaries via <a href="https://github.com/codeforgermany/click_that_hood" target="_blank" rel="noopener">click_that_hood</a> (MIT); world boundaries via <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a> (ISC, Natural Earth).</p>
 </footer>
 
 <script src="assets/js/vendor/d3.min.js"></script>
