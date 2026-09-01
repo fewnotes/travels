@@ -6,10 +6,24 @@
 // assets/data/world-countries.geojson). A region listed in both wins
 // as "visited".
 // ---------------------------------------------------------------------
-var STATE_VISITED_IDS = [];
+var STATE_VISITED_IDS = [
+  "US-Washington",
+  "US-Oregon",
+  "US-California",
+  "US-Nevada",
+  "US-Wyoming",
+  "US-Montana",
+  "US-Idaho",
+  "US-Arizona",
+  "US-Utah",
+  "US-New-York",
+  "US-New-Jersey",
+  "US-Florida",
+  "CA-British-Columbia"
+];
 
-var WORLD_VISITED_IDS = [];
+var WORLD_VISITED_IDS = ["US", "CA", "IN", "JP"];
 
-var STATE_BUCKET_LIST_IDS = [];
+var STATE_BUCKET_LIST_IDS = ["US-Illinois"];
 
 var WORLD_BUCKET_LIST_IDS = [];
