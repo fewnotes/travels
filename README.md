@@ -1,7 +1,58 @@
-# personal-sites
+# travels
 
-Interactive "places visited" maps (US/Canada states & provinces, and world
-countries), built as static HTML/CSS/JS for GitHub Pages.
+Interactive "places visited" maps (US/Canada states & provinces, and world countries), live at **https://travels.fewnotes.net**.
+
+Sister site: [travelblog.fewnotes.net](https://travelblog.fewnotes.net) — trip write-ups and photos.
+
+## What it is
+
+A static HTML/CSS/JS site hosted on GitHub Pages. No build step — everything is plain files served directly. The map is rendered client-side using D3.js with GeoJSON boundary data committed to the repo.
+
+Three separate map pages exist, one per person (each with their own visited/bucket-list data):
+
+```
+p/index.html    map page (data: assets/js/data-p.js)
+s/index.html    map page (data: assets/js/data-s.js)
+t/index.html    map page (data: assets/js/data-t.js)
+index.html      root redirect → p/
+assets/
+  css/style.css           all styling
+  js/
+    map.js                map rendering logic (D3, shared by all pages)
+    data-p.js             visited + bucket-list IDs for p
+    data-s.js             visited + bucket-list IDs for s
+    data-t.js             visited + bucket-list IDs for t
+    vendor/d3.min.js      D3.js (bundled, no CDN dependency)
+  data/
+    us-canada.geojson     US states + Canadian provinces/territories boundary data
+    world-countries.geojson  country boundary data
+    region-index.json     name → id lookup for all regions
+scripts/
+  generate-geodata.js     script to regenerate the GeoJSON files from upstream sources
+CNAME                     travels.fewnotes.net
+```
+
+## How deployment works
+
+Push to `main` → GitHub Pages serves the files directly — no build step, no Jekyll. Changes are live within seconds.
+
+## Custom domain mapping
+
+GitHub Pages custom domain setup involves two parts:
+
+**1. CNAME file in the repo**
+`CNAME` contains `travels.fewnotes.net`. GitHub reads this file and serves the site at that hostname.
+
+**2. DNS record at the domain registrar**
+A `CNAME` DNS record points `travels` (subdomain of `fewnotes.net`) to `fewnotes.github.io`. GitHub's servers receive the request, look at the `Host` header, match it against known custom domains across all Pages sites, and route it to this repo's files.
+
+HTTPS is handled automatically by GitHub Pages (Let's Encrypt certificate, renewed automatically). No configuration needed beyond the two steps above.
+
+## Adding a visited region
+
+Each `data-*.js` file exports four arrays: `STATE_VISITED_IDS`, `WORLD_VISITED_IDS`, `STATE_BUCKET_LIST_IDS`, `WORLD_BUCKET_LIST_IDS`.
+
+To find the correct id for a region, search `assets/data/region-index.json` — it lists every state/province and country id next to its name, alphabetically sorted.
 
 ## Finding a region's id (for STATE_VISITED_IDS etc. in assets/js/data-*.js)
 
@@ -40,3 +91,9 @@ git commit -m "Regenerate map boundary data"
 See `scripts/generate-geodata.js` for exactly what each dataset includes
 and excludes (e.g. dropped uninhabited territories, Kosovo/Somaliland/N.
 Cyprus fallback codes).
+
+## Design notes
+
+- Dark mode is default; toggle persists in `localStorage` key `visitedMap.test.pageTheme`
+- Font: Lora (400/600) from Google Fonts — matches the sister site travelblog.fewnotes.net
+- Map palette is hardcoded to Ocean; color values live in the `THEMES` array in `map.js`
