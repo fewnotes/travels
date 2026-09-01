@@ -168,6 +168,8 @@
   var viewStateBtn = document.getElementById("view-state-btn");
   var viewWorldBtn = document.getElementById("view-world-btn");
   var subtitle = document.getElementById("subtitle");
+  var visitedListSection = document.getElementById("visited-list-section");
+  var visitedList = document.getElementById("visited-list");
   var SUBTITLES = {
     state: "US States & Canadian Provinces/Territories",
     world: "Countries of the World"
@@ -250,6 +252,7 @@
 
     applyColors();
     updateStat();
+    renderVisitedList(view, geo);
   }
 
   function onRegionClick(view, d) {
@@ -275,6 +278,41 @@
   function updateStat() {
     var view = views[currentViewKey];
     statCount.textContent = view.stat(view.geo);
+  }
+
+  // Converts an ISO 3166-1 alpha-2 code into its flag emoji by mapping
+  // each letter to a Unicode regional indicator symbol (A -> U+1F1E6,
+  // ..., Z -> U+1F1FF); the pair renders as the flag on supporting
+  // systems, or as two letter tiles otherwise.
+  function flagEmoji(alpha2) {
+    return String.fromCodePoint.apply(null, alpha2.split("").map(function (ch) {
+      return 0x1f1e6 + (ch.toUpperCase().charCodeAt(0) - 65);
+    }));
+  }
+
+  function renderVisitedList(view, geo) {
+    if (view.key !== "world") {
+      visitedListSection.hidden = true;
+      visitedList.innerHTML = "";
+      return;
+    }
+    visitedListSection.hidden = false;
+    var names = {};
+    geo.features.forEach(function (d) { names[d.id] = d.properties.name; });
+    var items = Array.from(view.visited).map(function (id) {
+      return { id: id, name: names[id] || id };
+    });
+    items.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    visitedList.innerHTML = "";
+    items.forEach(function (item) {
+      var li = document.createElement("li");
+      var flag = document.createElement("span");
+      flag.className = "visited-list-flag";
+      flag.textContent = flagEmoji(item.id);
+      li.appendChild(flag);
+      li.appendChild(document.createTextNode(item.name));
+      visitedList.appendChild(li);
+    });
   }
 
   function showTooltip(view, event, d) {

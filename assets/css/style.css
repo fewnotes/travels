@@ -202,6 +202,43 @@ main {
   z-index: 10;
 }
 
+.visited-list-section {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem 1.5rem;
+}
+
+.visited-list-section h2 {
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+
+.visited-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+}
+
+.visited-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+
+.visited-list-flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 footer {
   text-align: center;
   padding: 1rem;
