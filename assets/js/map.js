@@ -153,7 +153,7 @@
     }
   };
 
-  var currentViewKey = "state";
+  var currentViewKey = "world";
   var currentTheme = loadTheme();
 
   var themeSelect = document.getElementById("theme-select");
