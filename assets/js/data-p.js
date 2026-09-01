@@ -28,7 +28,7 @@ var STATE_VISITED_IDS = [
   "CA-Alberta"
 ];
 
-var WORLD_VISITED_IDS = [];
+var WORLD_VISITED_IDS = ["CA", "US", "MX", "IS", "NO", "IT", "CH", "IN", "JP"];
 
 var STATE_BUCKET_LIST_IDS = [
   "US-Alaska",
@@ -40,4 +40,4 @@ var STATE_BUCKET_LIST_IDS = [
   "CA-Manitoba"
 ];
 
-var WORLD_BUCKET_LIST_IDS = [];
+var WORLD_BUCKET_LIST_IDS = ["GL", "AR", "CL", "NZ", "MN"];
