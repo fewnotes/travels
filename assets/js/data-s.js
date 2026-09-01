@@ -28,8 +28,9 @@ var WORLD_VISITED_IDS = [
   "IT",
   "CH",
   "IR",
+  "IQ",
   "SY",
-  "SA",
+  "AE",
   "TR",
   "TH"
 ];
