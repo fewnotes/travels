@@ -29,6 +29,16 @@
 
   var WORLD_VISITED_IDS = ["US", "CA", "FR", "JP", "IN"];
 
+  // Bucket-list (want to visit) regions per view. Same id formats as the
+  // visited lists above. A region listed in both wins as "visited".
+  var STATE_BUCKET_LIST_IDS = [
+    "US-Alaska",
+    "US-Montana",
+    "CA-British-Columbia"
+  ];
+
+  var WORLD_BUCKET_LIST_IDS = ["NZ", "IS", "AU", "PE"];
+
   // Postal / ISO-3166-2 style short codes shown as labels on the state map.
   var REGION_CODES = {
     "US-Alabama": "AL", "US-Arizona": "AZ", "US-Arkansas": "AR", "US-California": "CA",
@@ -64,6 +74,7 @@
       label: "States & Provinces",
       dataUrl: "assets/data/us-canada.geojson",
       visited: new Set(STATE_VISITED_IDS),
+      bucketList: new Set(STATE_BUCKET_LIST_IDS),
       selectedId: null,
       geo: null,
       hasLabels: true,
@@ -133,6 +144,7 @@
       label: "Countries",
       dataUrl: "assets/data/world-countries.geojson",
       visited: new Set(WORLD_VISITED_IDS),
+      bucketList: new Set(WORLD_BUCKET_LIST_IDS),
       selectedId: null,
       geo: null,
       hasLabels: false,
@@ -269,9 +281,12 @@
     var theme = THEMES.find(function (t) { return t.id === currentTheme; }) || THEMES[0];
     svg.selectAll(".state-path").each(function (d) {
       var isVisited = view.visited.has(d.id);
+      var isBucketList = !isVisited && view.bucketList.has(d.id);
+      var fill = isVisited ? theme.visited : (isBucketList ? "var(--bucket-fill)" : null);
+      var stroke = isVisited ? theme.stroke : (isBucketList ? "var(--bucket-stroke)" : null);
       d3.select(this)
-        .style("fill", isVisited ? theme.visited : null)
-        .style("stroke", isVisited ? theme.stroke : null);
+        .style("fill", fill)
+        .style("stroke", stroke);
     });
   }
 
