@@ -4,6 +4,13 @@
   var THEME_KEY = "visitedMap.test.theme";
   var PAGE_THEME_KEY = "visitedMap.test.pageTheme";
 
+  // Prefix for the "assets/..." data URLs below. Root index.html doesn't
+  // set this (defaults to ""); a page one directory deep (e.g. /p/, /s/,
+  // /t/) sets window.ASSET_BASE = "../" before loading this script.
+  var ASSET_BASE = (typeof window !== "undefined" && typeof window.ASSET_BASE === "string")
+    ? window.ASSET_BASE
+    : "";
+
   // Each theme's bucket-list color is a lighter tint of its own visited
   // color, so switching palettes changes both consistently.
   var THEMES = [
@@ -14,32 +21,9 @@
     { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111", bucket: "#999999", bucketStroke: "#666666" }
   ];
 
-  // ---------------------------------------------------------------------
-  // Hardcoded list of visited regions per view. Edit these to reflect
-  // real visits. State/province ids follow "US-<Name>" / "CA-<Name>"
-  // (see assets/data/us-canada.geojson); country ids are ISO 3166-1
-  // alpha-2 codes (see assets/data/world-countries.geojson).
-  // ---------------------------------------------------------------------
-  var STATE_VISITED_IDS = [
-    "US-California",
-    "US-Texas",
-    "US-Washington",
-    "US-New-York",
-    "CA-Quebec",
-    "CA-Ontario"
-  ];
-
-  var WORLD_VISITED_IDS = ["US", "CA", "FR", "JP", "IN"];
-
-  // Bucket-list (want to visit) regions per view. Same id formats as the
-  // visited lists above. A region listed in both wins as "visited".
-  var STATE_BUCKET_LIST_IDS = [
-    "US-Alaska",
-    "US-Montana",
-    "CA-British-Columbia"
-  ];
-
-  var WORLD_BUCKET_LIST_IDS = ["NZ", "IS", "AU", "PE"];
+  // STATE_VISITED_IDS, WORLD_VISITED_IDS, STATE_BUCKET_LIST_IDS, and
+  // WORLD_BUCKET_LIST_IDS are per-person data, defined in a separate
+  // data-*.js file loaded before this script (see index.html/p/s/t).
 
   // Postal / ISO-3166-2 style short codes shown as labels on the state map.
   var REGION_CODES = {
@@ -74,7 +58,7 @@
     state: {
       key: "state",
       label: "States & Provinces",
-      dataUrl: "assets/data/us-canada.geojson",
+      dataUrl: ASSET_BASE + "assets/data/us-canada.geojson",
       visited: new Set(STATE_VISITED_IDS),
       bucketList: new Set(STATE_BUCKET_LIST_IDS),
       selectedId: null,
@@ -144,7 +128,7 @@
     world: {
       key: "world",
       label: "Countries",
-      dataUrl: "assets/data/world-countries.geojson",
+      dataUrl: ASSET_BASE + "assets/data/world-countries.geojson",
       visited: new Set(WORLD_VISITED_IDS),
       bucketList: new Set(WORLD_BUCKET_LIST_IDS),
       selectedId: null,
