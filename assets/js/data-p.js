@@ -40,4 +40,4 @@ var STATE_BUCKET_LIST_IDS = [
   "CA-Manitoba"
 ];
 
-var WORLD_BUCKET_LIST_IDS = ["GL", "AR", "CL", "NZ", "MN"];
+var WORLD_BUCKET_LIST_IDS = ["GL", "AR", "CL", "NZ", "MN", "KZ"];
