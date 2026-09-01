@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visited: US &amp; Canada</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header>
+  <h1>Places I've Visited</h1>
+  <p class="subtitle">US States &amp; Canadian Provinces/Territories — click a region to mark it visited</p>
+</header>
+
+<div class="controls">
+  <label for="theme-select">Color scheme:</label>
+  <select id="theme-select"></select>
+
+  <span class="stat" id="stat-count"></span>
+
+  <button id="reset-btn" type="button">Reset all</button>
+</div>
+
+<main>
+  <div id="map-wrap">
+    <svg id="map"></svg>
+    <div id="tooltip" class="tooltip" hidden></div>
+  </div>
+</main>
+
+<footer>
+  <p>Data: US &amp; Canadian admin boundaries via <a href="https://github.com/codeforgermany/click_that_hood" target="_blank" rel="noopener">click_that_hood</a> (MIT). Note: Alaska &amp; Hawaii are not included in this test dataset.</p>
+</footer>
+
+<script src="assets/js/vendor/d3.min.js"></script>
+<script src="assets/js/map.js"></script>
+</body>
+</html>
