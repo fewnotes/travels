@@ -136,7 +136,10 @@ header h1 {
 
 main {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: flex-start;
+  gap: 1.5rem;
   padding: 0 1rem 2rem;
 }
 
@@ -144,6 +147,7 @@ main {
   position: relative;
   width: 100%;
   max-width: 960px;
+  flex: 1 1 640px;
 }
 
 #map {
@@ -203,9 +207,8 @@ main {
 }
 
 .visited-list-section {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 1rem 1.5rem;
+  flex: 0 1 220px;
+  min-width: 180px;
 }
 
 .visited-list-section h2 {
@@ -213,7 +216,7 @@ main {
   color: var(--muted);
   font-weight: 600;
   margin: 0 0 0.75rem;
-  text-align: center;
+  text-align: left;
 }
 
 .visited-list {
@@ -221,9 +224,8 @@ main {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .visited-list li {
