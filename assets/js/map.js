@@ -1,7 +1,6 @@
 (function () {
   "use strict";
 
-  var THEME_KEY = "visitedMap.test.theme";
   var PAGE_THEME_KEY = "visitedMap.test.pageTheme";
 
   // Prefix for the "assets/..." data URLs below. Root index.html doesn't
@@ -155,9 +154,8 @@
   };
 
   var currentViewKey = "world";
-  var currentTheme = loadTheme();
+  var currentTheme = "ocean";
 
-  var themeSelect = document.getElementById("theme-select");
   var statCount = document.getElementById("stat-count");
   var tooltip = document.getElementById("tooltip");
   var svg = d3.select("#map");
@@ -174,15 +172,6 @@
     state: "US States & Canadian Provinces/Territories",
     world: "Countries of the World"
   };
-
-  populateThemeSelect();
-  themeSelect.value = currentTheme;
-
-  themeSelect.addEventListener("change", function () {
-    currentTheme = themeSelect.value;
-    saveTheme(currentTheme);
-    applyColors();
-  });
 
   updatePageThemeBtns();
   themeLightBtn.addEventListener("click", function () { setPageTheme("light"); });
@@ -351,30 +340,7 @@
     tooltip.hidden = true;
   }
 
-  function populateThemeSelect() {
-    THEMES.forEach(function (t) {
-      var opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.name;
-      themeSelect.appendChild(opt);
-    });
-  }
-
-  function loadTheme() {
-    try {
-      return localStorage.getItem(THEME_KEY) || THEMES[0].id;
-    } catch (e) {
-      return THEMES[0].id;
-    }
-  }
-
-  function saveTheme(id) {
-    try {
-      localStorage.setItem(THEME_KEY, id);
-    } catch (e) { /* storage unavailable */ }
-  }
-
-  function setPageTheme(value) {
+function setPageTheme(value) {
     document.documentElement.setAttribute("data-theme", value);
     savePageTheme(value);
     updatePageThemeBtns();
