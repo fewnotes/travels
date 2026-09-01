@@ -33,7 +33,7 @@ var WORLD_VISITED_IDS = [
   "AE",
   "TR",
   "TH",
-  "UK"
+  "GB"
 ];
 
 var STATE_BUCKET_LIST_IDS = [
