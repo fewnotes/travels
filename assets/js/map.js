@@ -61,7 +61,8 @@
   var tooltip = document.getElementById("tooltip");
   var svg = d3.select("#map");
   var mapWrap = document.getElementById("map-wrap");
-  var pageThemeBtn = document.getElementById("page-theme-btn");
+  var themeLightBtn = document.getElementById("theme-light-btn");
+  var themeDarkBtn = document.getElementById("theme-dark-btn");
   var totalByCountry = { US: 0, CA: 0 };
 
   populateThemeSelect();
@@ -73,18 +74,16 @@
     applyColors();
   });
 
-  updatePageThemeBtn();
-  pageThemeBtn.addEventListener("click", function () {
-    var next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
-    savePageTheme(next);
-    updatePageThemeBtn();
-  });
+  updatePageThemeBtns();
+  themeLightBtn.addEventListener("click", function () { setPageTheme("light"); });
+  themeDarkBtn.addEventListener("click", function () { setPageTheme("dark"); });
 
   d3.json(DATA_URL).then(function (geo) {
-    var width = 960;
+    var mainWidth = 960;
+    var leftPad = 145; // strip on the left for the Alaska inset
+    var width = mainWidth + leftPad;
     var mainHeight = 600;
-    var height = mainHeight + 85; // extra strip below the mainland for AK/HI insets
+    var height = mainHeight + 70; // strip below the mainland for the Hawaii inset
     svg.attr("viewBox", "0 0 " + width + " " + height);
 
     // Mainland projection covers the lower 48 US states, DC, and Canada.
@@ -93,24 +92,25 @@
       .center([0, 45])
       .parallels([40, 55])
       .scale(700)
-      .translate([width / 2, mainHeight / 2]);
+      .translate([leftPad + mainWidth / 2, mainHeight / 2]);
 
     // Alaska and Hawaii are geographically distant, so they get their own
-    // small inset projections (same rotate/parallels d3.geoAlbersUsa uses),
-    // tucked into the strip below the mainland.
+    // small inset projections (same rotate/parallels d3.geoAlbersUsa uses).
+    // Alaska sits in the left margin roughly level with the Pacific
+    // Northwest/Yukon; Hawaii sits in a strip below the mainland.
     var akProjection = d3.geoConicEqualArea()
       .rotate([154, 0])
       .center([-2, 58.5])
       .parallels([55, 65])
-      .scale(230)
-      .translate([335, 625]);
+      .scale(210)
+      .translate([70, 330]);
 
     var hiProjection = d3.geoConicEqualArea()
       .rotate([157, 0])
       .center([-3, 19.9])
       .parallels([8, 18])
       .scale(600)
-      .translate([460, 645]);
+      .translate([leftPad + 460, mainHeight + 35]);
 
     var mainPath = d3.geoPath().projection(mainProjection);
     var akPath = d3.geoPath().projection(akProjection);
@@ -232,10 +232,18 @@
     } catch (e) { /* storage unavailable */ }
   }
 
-  function updatePageThemeBtn() {
+  function setPageTheme(value) {
+    document.documentElement.setAttribute("data-theme", value);
+    savePageTheme(value);
+    updatePageThemeBtns();
+  }
+
+  function updatePageThemeBtns() {
     var isLight = document.documentElement.getAttribute("data-theme") === "light";
-    pageThemeBtn.textContent = isLight ? "☾ Dark mode" : "☀ Light mode";
-    pageThemeBtn.setAttribute("aria-pressed", String(!isLight));
+    themeLightBtn.classList.toggle("active", isLight);
+    themeLightBtn.setAttribute("aria-pressed", String(isLight));
+    themeDarkBtn.classList.toggle("active", !isLight);
+    themeDarkBtn.setAttribute("aria-pressed", String(!isLight));
   }
 
   function savePageTheme(value) {

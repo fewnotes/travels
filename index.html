@@ -19,7 +19,7 @@
 <body>
 <header>
   <h1>Places I've Visited</h1>
-  <p class="subtitle">US States &amp; Canadian Provinces/Territories — click a region to highlight it</p>
+  <p class="subtitle">US States &amp; Canadian Provinces/Territories</p>
 </header>
 
 <div class="controls">
@@ -28,7 +28,10 @@
 
   <span class="stat" id="stat-count"></span>
 
-  <button id="page-theme-btn" type="button" aria-pressed="false"></button>
+  <div class="theme-switch" role="group" aria-label="Page theme">
+    <button id="theme-light-btn" type="button" data-theme-choice="light">☀ Light</button>
+    <button id="theme-dark-btn" type="button" data-theme-choice="dark">☾ Dark</button>
+  </div>
 </div>
 
 <main>

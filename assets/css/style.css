@@ -81,8 +81,31 @@ header h1 {
   background: var(--panel-hover);
 }
 
-#page-theme-btn {
+.theme-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
   margin-left: 0.25rem;
+}
+
+.theme-switch button {
+  border: none;
+  border-radius: 0;
+}
+
+.theme-switch button:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.theme-switch button.active {
+  background: var(--fg);
+  color: var(--bg);
+  cursor: default;
+}
+
+.theme-switch button.active:hover {
+  background: var(--fg);
 }
 
 .stat {
