@@ -11,14 +11,15 @@
     ? window.ASSET_BASE
     : "";
 
-  // Each theme's bucket-list color is a lighter tint of its own visited
-  // color, so switching palettes changes both consistently.
+  // Each theme's bucket-list color is a contrasting hue against its own
+  // visited color (not a tint of it), so the two stay visually distinct
+  // while switching palettes changes both consistently.
   var THEMES = [
-    { id: "ocean", name: "Ocean", visited: "#1f6f8b", stroke: "#155466", bucket: "#6fb3c9", bucketStroke: "#3d7f96" },
-    { id: "sunset", name: "Sunset", visited: "#e0793c", stroke: "#a85526", bucket: "#f2b98a", bucketStroke: "#c98a4f" },
-    { id: "forest", name: "Forest", visited: "#4c8c4a", stroke: "#33612f", bucket: "#96c48f", bucketStroke: "#5f8f5a" },
-    { id: "berry", name: "Berry", visited: "#9c3f6c", stroke: "#6f2a4c", bucket: "#c983a6", bucketStroke: "#9c5c7d" },
-    { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111", bucket: "#999999", bucketStroke: "#666666" }
+    { id: "ocean", name: "Ocean", visited: "#1f6f8b", stroke: "#155466", bucket: "#d99a3d", bucketStroke: "#a8721f" },
+    { id: "sunset", name: "Sunset", visited: "#e0793c", stroke: "#a85526", bucket: "#2f8f9e", bucketStroke: "#1f6570" },
+    { id: "forest", name: "Forest", visited: "#4c8c4a", stroke: "#33612f", bucket: "#a24a8f", bucketStroke: "#7a3269" },
+    { id: "berry", name: "Berry", visited: "#9c3f6c", stroke: "#6f2a4c", bucket: "#c2a23f", bucketStroke: "#8f7526" },
+    { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111", bucket: "#c2924a", bucketStroke: "#8f6a2f" }
   ];
 
   // STATE_VISITED_IDS, WORLD_VISITED_IDS, STATE_BUCKET_LIST_IDS, and
