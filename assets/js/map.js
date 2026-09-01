@@ -80,10 +80,10 @@
 
   d3.json(DATA_URL).then(function (geo) {
     var mainWidth = 960;
-    var leftPad = 145; // strip on the left for the Alaska/Hawaii insets
+    var leftPad = 130; // strip on the left for the Alaska/Hawaii insets
     var width = mainWidth + leftPad;
     var mainHeight = 600;
-    var topPad = 35; // extra room so northern Canada isn't clipped
+    var topPad = 140; // extra room so northern Canada (Nunavut's Arctic islands) isn't clipped
     var height = topPad + mainHeight;
     svg.attr("viewBox", "0 0 " + width + " " + height);
 
@@ -97,21 +97,21 @@
 
     // Alaska and Hawaii are geographically distant, so they get their own
     // small inset projections (same rotate/parallels d3.geoAlbersUsa uses),
-    // stacked in the left margin: Alaska roughly level with the Pacific
-    // Northwest/Yukon, Hawaii below it.
+    // stacked in the left margin close to the mainland: Alaska roughly
+    // level with the Pacific Northwest/Yukon, Hawaii below it.
     var akProjection = d3.geoConicEqualArea()
       .rotate([154, 0])
       .center([-2, 58.5])
       .parallels([55, 65])
       .scale(210)
-      .translate([70, topPad + 280]);
+      .translate([69, topPad + 280]);
 
     var hiProjection = d3.geoConicEqualArea()
       .rotate([157, 0])
       .center([-3, 19.9])
       .parallels([8, 18])
       .scale(480)
-      .translate([70, topPad + 410]);
+      .translate([69, topPad + 410]);
 
     var mainPath = d3.geoPath().projection(mainProjection);
     var akPath = d3.geoPath().projection(akProjection);
