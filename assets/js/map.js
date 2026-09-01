@@ -4,12 +4,14 @@
   var THEME_KEY = "visitedMap.test.theme";
   var PAGE_THEME_KEY = "visitedMap.test.pageTheme";
 
+  // Each theme's bucket-list color is a lighter tint of its own visited
+  // color, so switching palettes changes both consistently.
   var THEMES = [
-    { id: "ocean", name: "Ocean", visited: "#1f6f8b", stroke: "#155466" },
-    { id: "sunset", name: "Sunset", visited: "#e0793c", stroke: "#a85526" },
-    { id: "forest", name: "Forest", visited: "#4c8c4a", stroke: "#33612f" },
-    { id: "berry", name: "Berry", visited: "#9c3f6c", stroke: "#6f2a4c" },
-    { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111" }
+    { id: "ocean", name: "Ocean", visited: "#1f6f8b", stroke: "#155466", bucket: "#6fb3c9", bucketStroke: "#3d7f96" },
+    { id: "sunset", name: "Sunset", visited: "#e0793c", stroke: "#a85526", bucket: "#f2b98a", bucketStroke: "#c98a4f" },
+    { id: "forest", name: "Forest", visited: "#4c8c4a", stroke: "#33612f", bucket: "#96c48f", bucketStroke: "#5f8f5a" },
+    { id: "berry", name: "Berry", visited: "#9c3f6c", stroke: "#6f2a4c", bucket: "#c983a6", bucketStroke: "#9c5c7d" },
+    { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111", bucket: "#999999", bucketStroke: "#666666" }
   ];
 
   // ---------------------------------------------------------------------
@@ -182,6 +184,7 @@
   var subtitle = document.getElementById("subtitle");
   var visitedListSection = document.getElementById("visited-list-section");
   var visitedList = document.getElementById("visited-list");
+  var legend = document.getElementById("legend");
   var SUBTITLES = {
     state: "US States & Canadian Provinces/Territories",
     world: "Countries of the World"
@@ -282,11 +285,32 @@
     svg.selectAll(".state-path").each(function (d) {
       var isVisited = view.visited.has(d.id);
       var isBucketList = !isVisited && view.bucketList.has(d.id);
-      var fill = isVisited ? theme.visited : (isBucketList ? "var(--bucket-fill)" : null);
-      var stroke = isVisited ? theme.stroke : (isBucketList ? "var(--bucket-stroke)" : null);
+      var fill = isVisited ? theme.visited : (isBucketList ? theme.bucket : null);
+      var stroke = isVisited ? theme.stroke : (isBucketList ? theme.bucketStroke : null);
       d3.select(this)
         .style("fill", fill)
         .style("stroke", stroke);
+    });
+    renderLegend(theme);
+  }
+
+  function renderLegend(theme) {
+    var items = [
+      { label: "Visited", fill: theme.visited, stroke: theme.stroke },
+      { label: "Bucket list", fill: theme.bucket, stroke: theme.bucketStroke },
+      { label: "Not visited", fill: "var(--unvisited-fill)", stroke: "var(--unvisited-stroke)" }
+    ];
+    legend.innerHTML = "";
+    items.forEach(function (item) {
+      var el = document.createElement("span");
+      el.className = "legend-item";
+      var swatch = document.createElement("span");
+      swatch.className = "legend-swatch";
+      swatch.style.background = item.fill;
+      swatch.style.border = "1px solid " + item.stroke;
+      el.appendChild(swatch);
+      el.appendChild(document.createTextNode(item.label));
+      legend.appendChild(el);
     });
   }
 

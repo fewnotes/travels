@@ -8,8 +8,6 @@
   --panel-hover: #282c29;
   --unvisited-fill: #262a26;
   --unvisited-stroke: #3c423c;
-  --bucket-fill: #7a6a2e;
-  --bucket-stroke: #55491e;
   --label-fill: #f2f2ee;
   --label-halo: rgba(10, 12, 10, 0.7);
 }
@@ -24,8 +22,6 @@
   --panel-hover: #eeeeee;
   --unvisited-fill: #e4e1d8;
   --unvisited-stroke: #b7b2a4;
-  --bucket-fill: #d9c27a;
-  --bucket-stroke: #a68c3c;
   --label-fill: #222222;
   --label-halo: rgba(255, 255, 255, 0.75);
 }
@@ -136,6 +132,29 @@ header h1 {
   color: var(--fg);
   min-width: 9rem;
   text-align: center;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0 1rem 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  flex: none;
 }
 
 main {
