@@ -193,7 +193,7 @@
       else if (id.indexOf("CA-") === 0) visitedCA++;
     });
     statCount.textContent =
-      "US: " + visitedUS + "/" + totalByCountry.US +
+      "US: " + visitedUS + "/" + totalByCountry.US + " (50 states + DC)" +
       " | Canada: " + visitedCA + "/" + totalByCountry.CA;
   }
 
