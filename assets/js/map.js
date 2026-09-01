@@ -70,7 +70,7 @@
       regionCodeFor: function (d) { return REGION_CODES[d.id] || ""; },
       setupProjection: function (svgSel, geo) {
         var mainWidth = 960;
-        var leftPad = 130; // strip on the left for the Alaska/Hawaii insets
+        var leftPad = 128; // strip on the left for the Alaska/Hawaii insets
         var width = mainWidth + leftPad;
         var mainHeight = 600;
         var topPad = 140; // room so northern Canada (Nunavut's Arctic islands) isn't clipped
@@ -87,22 +87,24 @@
 
         // Alaska and Hawaii are geographically distant, so they get their
         // own small inset projections (same rotate/parallels
-        // d3.geoAlbersUsa uses), stacked in the left margin close to the
-        // mainland: Alaska roughly level with the Pacific Northwest/Yukon,
-        // Hawaii below it.
+        // d3.geoAlbersUsa uses). Following the conventional AlbersUSA
+        // layout, both are anchored as a compact group in the bottom-left
+        // corner (roughly level with California) rather than floating in
+        // the middle of the tall left margin, which otherwise reads as a
+        // big empty gap above/below them.
         var akProjection = d3.geoConicEqualArea()
           .rotate([154, 0])
           .center([-2, 58.5])
           .parallels([55, 65])
           .scale(210)
-          .translate([69, topPad + 280]);
+          .translate([72, 668]);
 
         var hiProjection = d3.geoConicEqualArea()
           .rotate([157, 0])
           .center([-3, 19.9])
           .parallels([8, 18])
           .scale(480)
-          .translate([69, topPad + 410]);
+          .translate([45, 714]);
 
         var mainPath = d3.geoPath().projection(mainProjection);
         var akPath = d3.geoPath().projection(akProjection);
@@ -140,9 +142,11 @@
       setupProjection: function (svgSel, geo) {
         var width = 960;
         var height = 500;
+        var pad = 24; // visible margin so nothing sits flush against the edge
         svgSel.attr("viewBox", "0 0 " + width + " " + height);
 
-        var projection = d3.geoNaturalEarth1().fitSize([width, height], geo);
+        var projection = d3.geoNaturalEarth1()
+          .fitExtent([[pad, pad], [width - pad, height - pad]], geo);
         var path = d3.geoPath().projection(projection);
 
         return function pickPath() { return path; };
