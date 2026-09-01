@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Regenerates assets/data/us-canada.geojson and assets/data/world-countries.geojson.
+// Regenerates assets/data/us-canada.geojson, assets/data/world-countries.geojson,
+// and assets/data/region-index.json (an id -> name lookup for both, so you
+// can find the id for a place without hand-searching the geojson files).
 //
 // Run from the scripts/ directory:
 //   npm install
@@ -67,10 +69,13 @@ async function buildUsCanada() {
 
   console.log("Canada provinces/territories:", caFeatures.length, "(expect 13)");
 
-  const combined = { type: "FeatureCollection", features: usFeatures.concat(caFeatures) };
+  const allFeatures = usFeatures.concat(caFeatures);
+  const combined = { type: "FeatureCollection", features: allFeatures };
   const outPath = path.join(OUT_DIR, "us-canada.geojson");
   fs.writeFileSync(outPath, JSON.stringify(combined));
   console.log("Wrote", outPath, "-", combined.features.length, "total features");
+
+  return allFeatures;
 }
 
 function buildWorld() {
@@ -123,11 +128,37 @@ function buildWorld() {
   const outPath = path.join(OUT_DIR, "world-countries.geojson");
   fs.writeFileSync(outPath, JSON.stringify(combined));
   console.log("Wrote", outPath, "-", combined.features.length, "total features");
+
+  return features;
+}
+
+function writeRegionIndex(stateFeatures, worldFeatures) {
+  function toSortedNameMap(features) {
+    var entries = features.map(function (f) { return [f.id, f.properties.name]; });
+    entries.sort(function (a, b) { return a[1].localeCompare(b[1]); });
+    var map = {};
+    entries.forEach(function (pair) { map[pair[0]] = pair[1]; });
+    return map;
+  }
+
+  var index = {
+    states: toSortedNameMap(stateFeatures),
+    countries: toSortedNameMap(worldFeatures)
+  };
+
+  var outPath = path.join(OUT_DIR, "region-index.json");
+  fs.writeFileSync(outPath, JSON.stringify(index, null, 2) + "\n");
+  console.log(
+    "Wrote", outPath, "-",
+    Object.keys(index.states).length, "states,",
+    Object.keys(index.countries).length, "countries"
+  );
 }
 
 async function main() {
-  await buildUsCanada();
-  buildWorld();
+  const stateFeatures = await buildUsCanada();
+  const worldFeatures = buildWorld();
+  writeRegionIndex(stateFeatures, worldFeatures);
   console.log("Done. Review the diff in assets/data/ and commit if it looks right.");
 }
 
