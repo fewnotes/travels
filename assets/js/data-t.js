@@ -7,6 +7,7 @@
 // as "visited".
 // ---------------------------------------------------------------------
 var STATE_VISITED_IDS = [
+  "US-Hawaii",
   "US-Washington",
   "US-Oregon",
   "US-California",
