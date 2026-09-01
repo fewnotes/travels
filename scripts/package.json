@@ -1,0 +1,14 @@
+{
+  "name": "personal-sites-geodata-scripts",
+  "private": true,
+  "description": "Regenerates assets/data/*.geojson from us-atlas, world-atlas, and click_that_hood.",
+  "scripts": {
+    "generate": "node generate-geodata.js"
+  },
+  "dependencies": {
+    "us-atlas": "^3.0.1",
+    "world-atlas": "^2.0.2",
+    "topojson-client": "^3.1.0",
+    "iso-3166-1": "^2.1.1"
+  }
+}
