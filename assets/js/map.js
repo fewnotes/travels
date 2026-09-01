@@ -2,8 +2,45 @@
   "use strict";
 
   var DATA_URL = "assets/data/us-canada.geojson";
-  var STORAGE_KEY = "visitedMap.test.visited";
   var THEME_KEY = "visitedMap.test.theme";
+
+  // ---------------------------------------------------------------------
+  // Hardcoded list of visited regions. Edit this to reflect real visits.
+  // Ids follow the pattern "US-<State-Name>" / "CA-<Province-Name>" with
+  // spaces replaced by hyphens (see assets/data/us-canada.geojson).
+  // ---------------------------------------------------------------------
+  var VISITED_IDS = [
+    "US-California",
+    "US-Texas",
+    "US-Washington",
+    "US-New-York",
+    "CA-Quebec",
+    "CA-Ontario"
+  ];
+
+  // Postal / ISO-3166-2 style short codes shown as labels on the map.
+  var REGION_CODES = {
+    "US-Alabama": "AL", "US-Arizona": "AZ", "US-Arkansas": "AR", "US-California": "CA",
+    "US-Colorado": "CO", "US-Connecticut": "CT", "US-Delaware": "DE",
+    "US-District-of-Columbia": "DC", "US-Florida": "FL", "US-Georgia": "GA",
+    "US-Idaho": "ID", "US-Illinois": "IL", "US-Indiana": "IN", "US-Iowa": "IA",
+    "US-Kansas": "KS", "US-Kentucky": "KY", "US-Louisiana": "LA", "US-Maine": "ME",
+    "US-Maryland": "MD", "US-Massachusetts": "MA", "US-Michigan": "MI",
+    "US-Minnesota": "MN", "US-Mississippi": "MS", "US-Missouri": "MO",
+    "US-Montana": "MT", "US-Nebraska": "NE", "US-Nevada": "NV",
+    "US-New-Hampshire": "NH", "US-New-Jersey": "NJ", "US-New-Mexico": "NM",
+    "US-New-York": "NY", "US-North-Carolina": "NC", "US-North-Dakota": "ND",
+    "US-Ohio": "OH", "US-Oklahoma": "OK", "US-Oregon": "OR",
+    "US-Pennsylvania": "PA", "US-Rhode-Island": "RI", "US-South-Carolina": "SC",
+    "US-South-Dakota": "SD", "US-Tennessee": "TN", "US-Texas": "TX", "US-Utah": "UT",
+    "US-Vermont": "VT", "US-Virginia": "VA", "US-Washington": "WA",
+    "US-West-Virginia": "WV", "US-Wisconsin": "WI", "US-Wyoming": "WY",
+    "CA-Alberta": "AB", "CA-British-Columbia": "BC", "CA-Manitoba": "MB",
+    "CA-New-Brunswick": "NB", "CA-Newfoundland-and-Labrador": "NL",
+    "CA-Northwest-Territories": "NT", "CA-Nova-Scotia": "NS", "CA-Nunavut": "NU",
+    "CA-Ontario": "ON", "CA-Prince-Edward-Island": "PE", "CA-Quebec": "QC",
+    "CA-Saskatchewan": "SK", "CA-Yukon-Territory": "YT"
+  };
 
   var THEMES = [
     { id: "ocean", name: "Ocean", visited: "#1f6f8b", stroke: "#155466" },
@@ -13,12 +50,13 @@
     { id: "mono", name: "Monochrome", visited: "#333333", stroke: "#111111" }
   ];
 
-  var visited = loadVisited();
+  var visited = new Set(VISITED_IDS);
   var currentTheme = loadTheme();
+  var selectedId = null;
 
   var themeSelect = document.getElementById("theme-select");
   var statCount = document.getElementById("stat-count");
-  var resetBtn = document.getElementById("reset-btn");
+  var clearBtn = document.getElementById("reset-btn");
   var tooltip = document.getElementById("tooltip");
   var svg = d3.select("#map");
   var mapWrap = document.getElementById("map-wrap");
@@ -32,12 +70,9 @@
     applyColors();
   });
 
-  resetBtn.addEventListener("click", function () {
-    if (!confirm("Clear all visited regions?")) return;
-    visited.clear();
-    saveVisited();
-    applyColors();
-    updateStat();
+  clearBtn.textContent = "Clear selection";
+  clearBtn.addEventListener("click", function () {
+    setSelected(null);
   });
 
   d3.json(DATA_URL).then(function (geo) {
@@ -54,7 +89,9 @@
 
     var path = d3.geoPath().projection(projection);
 
-    svg.selectAll("path")
+    var regions = svg.append("g").attr("class", "regions");
+
+    regions.selectAll("path")
       .data(geo.features)
       .enter()
       .append("path")
@@ -62,12 +99,25 @@
       .attr("id", function (d) { return "region-" + d.id; })
       .attr("d", path)
       .on("click", function (event, d) {
-        toggleVisited(d.id);
+        onRegionClick(d);
       })
       .on("mousemove", function (event, d) {
         showTooltip(event, d);
       })
       .on("mouseleave", hideTooltip);
+
+    var labels = svg.append("g").attr("class", "labels");
+
+    labels.selectAll("text")
+      .data(geo.features)
+      .enter()
+      .append("text")
+      .attr("class", "region-label")
+      .attr("transform", function (d) {
+        var c = path.centroid(d);
+        return "translate(" + c[0] + "," + c[1] + ")";
+      })
+      .text(function (d) { return REGION_CODES[d.id] || ""; });
 
     applyColors();
     updateStat();
@@ -76,20 +126,22 @@
     mapWrap.innerHTML = "<p style='text-align:center;color:#a33;'>Could not load map data.</p>";
   });
 
-  function toggleVisited(id) {
-    if (visited.has(id)) {
-      visited.delete(id);
-    } else {
-      visited.add(id);
-    }
-    saveVisited();
-    applyColors();
-    updateStat();
+  function onRegionClick(d) {
+    setSelected(selectedId === d.id ? null : d.id);
+    // TODO: once selected, open a popup showing photos for this region
+    // (d.properties.name / d.id) instead of just highlighting it.
+  }
+
+  function setSelected(id) {
+    selectedId = id;
+    svg.selectAll(".state-path").classed("selected", function (d) {
+      return d.id === selectedId;
+    });
   }
 
   function applyColors() {
     var theme = THEMES.find(function (t) { return t.id === currentTheme; }) || THEMES[0];
-    svg.selectAll("path").each(function (d) {
+    svg.selectAll(".state-path").each(function (d) {
       var isVisited = visited.has(d.id);
       d3.select(this)
         .style("fill", isVisited ? theme.visited : null)
@@ -120,21 +172,6 @@
       opt.textContent = t.name;
       themeSelect.appendChild(opt);
     });
-  }
-
-  function loadVisited() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? new Set(JSON.parse(raw)) : new Set();
-    } catch (e) {
-      return new Set();
-    }
-  }
-
-  function saveVisited() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(visited)));
-    } catch (e) { /* storage unavailable */ }
   }
 
   function loadTheme() {

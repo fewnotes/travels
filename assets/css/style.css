@@ -101,6 +101,25 @@ main {
   filter: brightness(0.92);
 }
 
+.state-path.selected {
+  stroke: #222;
+  stroke-width: 2.25;
+}
+
+.region-label {
+  font-size: 7px;
+  font-weight: 600;
+  fill: #222;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
 .tooltip {
   position: absolute;
   pointer-events: none;
