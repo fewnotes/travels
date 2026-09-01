@@ -27,4 +27,4 @@ var WORLD_VISITED_IDS = ["US", "CA", "IN", "JP"];
 
 var STATE_BUCKET_LIST_IDS = ["US-Illinois"];
 
-var WORLD_BUCKET_LIST_IDS = ["IT"];
+var WORLD_BUCKET_LIST_IDS = ["IT", "CN"];
