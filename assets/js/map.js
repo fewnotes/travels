@@ -249,8 +249,9 @@
     svg.selectAll(".state-path").classed("selected", function (dd) {
       return dd.id === view.selectedId;
     });
-    // TODO: once selected, open a popup showing photos for this region
-    // (d.properties.name / d.id) instead of just highlighting it.
+    if (view.selectedId && typeof TravelsPhotos !== "undefined") {
+      TravelsPhotos.openPhotoModal(d.properties.name || d.id, d.id);
+    }
   }
 
   function applyColors() {
