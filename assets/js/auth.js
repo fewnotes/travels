@@ -2,34 +2,43 @@
   "use strict";
 
   var GOOGLE_CLIENT_ID = "1054362225241-osudvt9it1hoej6a0v373qkmjh5ts0uc.apps.googleusercontent.com";
-  var DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+  var MS_CLIENT_ID = "a0f846c3-77a9-4177-a978-b77bb4a8fa32";
+  var MS_AUTHORITY = "https://login.microsoftonline.com/consumers";
+  var MS_SCOPES = ["Files.Read", "User.Read"];
+  var GOOGLE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 
-  var _googleToken = null;   // { access_token, expires_at }
-  var _userInfo = null;      // { name, email, picture }
+  var _provider = null;        // "google" | "microsoft"
+  var _googleToken = null;     // { access_token, expires_at }
+  var _msApp = null;           // MSAL PublicClientApplication
+  var _msAccount = null;       // MSAL account
+  var _msToken = null;         // { access_token, expires_at }
+  var _userInfo = null;        // { name, email, picture }
   var _onLoginCallbacks = [];
 
-  function googleTokenValid() {
-    return _googleToken && Date.now() < _googleToken.expires_at;
+  function getProvider() { return _provider; }
+
+  function getToken() {
+    if (_provider === "google" && _googleToken && Date.now() < _googleToken.expires_at)
+      return _googleToken.access_token;
+    if (_provider === "microsoft" && _msToken && Date.now() < _msToken.expires_at)
+      return _msToken.access_token;
+    return null;
   }
 
-  function getGoogleToken() {
-    return googleTokenValid() ? _googleToken.access_token : null;
-  }
-
-  function getUserInfo() {
-    return _userInfo;
-  }
+  function getUserInfo() { return _userInfo; }
 
   function onLogin(cb) {
     _onLoginCallbacks.push(cb);
-    if (googleTokenValid() && _userInfo) cb(_userInfo);
+    if (getToken() && _userInfo) cb(_userInfo);
   }
 
   function _notifyLogin() {
     _onLoginCallbacks.forEach(function (cb) { cb(_userInfo); });
   }
 
-  function _fetchUserInfo(token, cb) {
+  // ── Google ────────────────────────────────────────────────────────────────
+
+  function _fetchGoogleUserInfo(token, cb) {
     fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: "Bearer " + token }
     })
@@ -38,7 +47,7 @@
         _userInfo = { name: info.name, email: info.email, picture: info.picture };
         cb(null, _userInfo);
       })
-      .catch(function (e) { cb(e); });
+      .catch(cb);
   }
 
   function signInWithGoogle(cb) {
@@ -48,17 +57,15 @@
     }
     var client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: DRIVE_SCOPE,
+      scope: GOOGLE_SCOPE,
       callback: function (response) {
-        if (response.error) {
-          if (cb) cb(new Error(response.error));
-          return;
-        }
+        if (response.error) { if (cb) cb(new Error(response.error)); return; }
+        _provider = "google";
         _googleToken = {
           access_token: response.access_token,
           expires_at: Date.now() + (response.expires_in - 60) * 1000
         };
-        _fetchUserInfo(response.access_token, function (err, info) {
+        _fetchGoogleUserInfo(response.access_token, function (err, info) {
           if (err) { if (cb) cb(err); return; }
           _notifyLogin();
           if (cb) cb(null, info);
@@ -68,19 +75,72 @@
     client.requestAccessToken({ prompt: "consent" });
   }
 
+  // ── Microsoft ─────────────────────────────────────────────────────────────
+
+  function _initMsal() {
+    if (_msApp) return _msApp;
+    _msApp = new msal.PublicClientApplication({
+      auth: {
+        clientId: MS_CLIENT_ID,
+        authority: MS_AUTHORITY,
+        redirectUri: window.location.origin + window.location.pathname
+      },
+      cache: { cacheLocation: "sessionStorage" }
+    });
+    return _msApp;
+  }
+
+  function signInWithMicrosoft(cb) {
+    if (typeof msal === "undefined") {
+      if (cb) cb(new Error("MSAL not loaded"));
+      return;
+    }
+    var app = _initMsal();
+    app.loginPopup({ scopes: MS_SCOPES })
+      .then(function (result) {
+        _msAccount = result.account;
+        return app.acquireTokenSilent({ scopes: MS_SCOPES, account: _msAccount });
+      })
+      .then(function (tokenResult) {
+        _provider = "microsoft";
+        _msToken = {
+          access_token: tokenResult.accessToken,
+          expires_at: tokenResult.expiresOn.getTime() - 60000
+        };
+        _userInfo = {
+          name: _msAccount.name,
+          email: _msAccount.username,
+          picture: null
+        };
+        _notifyLogin();
+        if (cb) cb(null, _userInfo);
+      })
+      .catch(function (e) { if (cb) cb(e); });
+  }
+
+  // ── Sign out ──────────────────────────────────────────────────────────────
+
   function signOut(cb) {
-    if (_googleToken) {
+    if (_provider === "google" && _googleToken && global.google) {
       google.accounts.oauth2.revoke(_googleToken.access_token, function () {});
     }
+    if (_provider === "microsoft" && _msApp && _msAccount) {
+      _msApp.logoutPopup({ account: _msAccount }).catch(function () {});
+    }
+    _provider = null;
     _googleToken = null;
+    _msToken = null;
+    _msAccount = null;
     _userInfo = null;
     if (cb) cb();
   }
 
   global.TravelsAuth = {
     signInWithGoogle: signInWithGoogle,
+    signInWithMicrosoft: signInWithMicrosoft,
     signOut: signOut,
-    getGoogleToken: getGoogleToken,
+    getToken: getToken,
+    getProvider: getProvider,
     getUserInfo: getUserInfo,
     onLogin: onLogin
   };

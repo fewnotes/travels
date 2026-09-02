@@ -1,19 +1,17 @@
 (function (global) {
   "use strict";
 
-  // Root folder name in Google Drive containing the map photo folders.
-  // Structure: travels-map/p/<region-id>/photo.jpg
   var DRIVE_ROOT_NAME = "travels-map";
-  var PAGE_KEY = "p"; // only p/ uses this for now
+  var PAGE_KEY = "p";
 
   var _modal = null;
-  var _driveFolderCache = {}; // region-id → [file objects]
+  var _currentRegionId = null;
+  var _driveFolderCache = {};
 
   // ── Modal UI ──────────────────────────────────────────────────────────────
 
   function _buildModal() {
     if (_modal) return;
-
     var overlay = document.createElement("div");
     overlay.id = "photo-modal-overlay";
     overlay.innerHTML = [
@@ -25,14 +23,9 @@
       '  <div id="photo-modal-body"></div>',
       '</div>'
     ].join("");
-
     document.body.appendChild(overlay);
-
-    overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) closeModal();
-    });
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
     document.getElementById("photo-modal-close").addEventListener("click", closeModal);
-
     _modal = {
       overlay: overlay,
       title: document.getElementById("photo-modal-title"),
@@ -40,9 +33,7 @@
     };
   }
 
-  function closeModal() {
-    if (_modal) _modal.overlay.style.display = "none";
-  }
+  function closeModal() { if (_modal) _modal.overlay.style.display = "none"; }
 
   function _showModal(regionName, content) {
     _buildModal();
@@ -59,6 +50,10 @@
       '    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">',
       '    Sign in with Google',
       '  </button>',
+      '  <button id="photo-ms-signin" class="signin-btn ms-btn">',
+      '    <img src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.png" alt="">',
+      '    Sign in with Microsoft',
+      '  </button>',
       '</div>'
     ].join(""));
 
@@ -67,9 +62,12 @@
         if (!err) openPhotoModal(regionName, _currentRegionId);
       });
     });
+    document.getElementById("photo-ms-signin").addEventListener("click", function () {
+      TravelsAuth.signInWithMicrosoft(function (err) {
+        if (!err) openPhotoModal(regionName, _currentRegionId);
+      });
+    });
   }
-
-  var _currentRegionId = null;
 
   function _showLoading(regionName) {
     _showModal(regionName, '<div class="photo-loading">Loading photos…</div>');
@@ -80,17 +78,18 @@
       _showModal(regionName, '<div class="photo-empty">No photos for this region yet.</div>');
       return;
     }
-    var imgs = files.map(function (f) {
-      var src = "https://www.googleapis.com/drive/v3/files/" + f.id + "?alt=media";
-      return '<img src="' + src + '" alt="' + regionName + '" data-token="' + token + '" class="photo-strip-img" loading="lazy">';
-    }).join("");
-    _showModal(regionName, '<div class="photo-strip">' + imgs + '</div>');
+    var strip = document.createElement("div");
+    strip.className = "photo-strip";
+    _showModal(regionName, "");
+    _modal.body.appendChild(strip);
 
-    // Inject auth header via fetch + blob URL (Drive requires Bearer token for media)
-    _modal.body.querySelectorAll(".photo-strip-img").forEach(function (img) {
-      var fileId = files[img.src.match(/files\/([^?]+)/)[1] ? img.src.match(/files\/([^?]+)/)[1] : 0];
-      var url = img.src;
-      fetch(url, { headers: { Authorization: "Bearer " + token } })
+    files.forEach(function (f) {
+      var img = document.createElement("img");
+      img.className = "photo-strip-img";
+      img.alt = regionName;
+      img.loading = "lazy";
+      strip.appendChild(img);
+      fetch(f.downloadUrl, { headers: { Authorization: "Bearer " + token } })
         .then(function (r) { return r.blob(); })
         .then(function (blob) { img.src = URL.createObjectURL(blob); })
         .catch(function () { img.alt = "Could not load photo"; });
@@ -108,32 +107,55 @@
       .catch(function (e) { cb(e); });
   }
 
-  function _findPhotosForRegion(regionId, token, cb) {
-    if (_driveFolderCache[regionId]) { cb(null, _driveFolderCache[regionId]); return; }
+  function _findGooglePhotos(regionId, token, cb) {
+    var cacheKey = "g:" + regionId;
+    if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
 
-    // 1. Find the root folder "travels-map"
     _driveQuery("name='" + DRIVE_ROOT_NAME + "' and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, roots) {
       if (err || !roots.length) { cb(null, []); return; }
-      var rootId = roots[0].id;
-
-      // 2. Find the page subfolder "p" inside root
-      _driveQuery("name='" + PAGE_KEY + "' and '" + rootId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, pages) {
+      _driveQuery("name='" + PAGE_KEY + "' and '" + roots[0].id + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, pages) {
         if (err || !pages.length) { cb(null, []); return; }
-        var pageId = pages[0].id;
-
-        // 3. Find the region folder inside the page folder
-        _driveQuery("name='" + regionId + "' and '" + pageId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, regions) {
+        _driveQuery("name='" + regionId + "' and '" + pages[0].id + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, regions) {
           if (err || !regions.length) { cb(null, []); return; }
-          var regionFolderId = regions[0].id;
-
-          // 4. List image files inside the region folder
-          _driveQuery("'" + regionFolderId + "' in parents and mimeType contains 'image/' and trashed=false", token, function (err, files) {
+          _driveQuery("'" + regions[0].id + "' in parents and mimeType contains 'image/' and trashed=false", token, function (err, files) {
             if (err) { cb(null, []); return; }
-            _driveFolderCache[regionId] = files;
-            cb(null, files);
+            var mapped = files.map(function (f) {
+              return { id: f.id, name: f.name, downloadUrl: "https://www.googleapis.com/drive/v3/files/" + f.id + "?alt=media" };
+            });
+            _driveFolderCache[cacheKey] = mapped;
+            cb(null, mapped);
           });
         });
       });
+    });
+  }
+
+  // ── OneDrive (Microsoft Graph) API ────────────────────────────────────────
+
+  function _graphGet(path, token, cb) {
+    fetch("https://graph.microsoft.com/v1.0" + path, {
+      headers: { Authorization: "Bearer " + token }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { cb(null, data); })
+      .catch(function (e) { cb(e); });
+  }
+
+  function _findOneDrivePhotos(regionId, token, cb) {
+    var cacheKey = "ms:" + regionId;
+    if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
+
+    var folderPath = "/" + DRIVE_ROOT_NAME + "/" + PAGE_KEY + "/" + regionId;
+    _graphGet("/me/drive/root:/" + encodeURIComponent(DRIVE_ROOT_NAME) + "/" + PAGE_KEY + "/" + regionId + ":/children?$filter=file ne null&$select=id,name,file", token, function (err, data) {
+      if (err || !data.value) { cb(null, []); return; }
+      var images = (data.value || []).filter(function (f) {
+        return f.file && f.file.mimeType && f.file.mimeType.indexOf("image/") === 0;
+      });
+      var mapped = images.map(function (f) {
+        return { id: f.id, name: f.name, downloadUrl: "https://graph.microsoft.com/v1.0/me/drive/items/" + f.id + "/content" };
+      });
+      _driveFolderCache[cacheKey] = mapped;
+      cb(null, mapped);
     });
   }
 
@@ -141,15 +163,15 @@
 
   function openPhotoModal(regionName, regionId) {
     _currentRegionId = regionId;
-    var token = TravelsAuth.getGoogleToken();
+    var token = TravelsAuth.getToken();
+    var provider = TravelsAuth.getProvider();
 
-    if (!token) {
-      _showLoginPrompt(regionName);
-      return;
-    }
+    if (!token) { _showLoginPrompt(regionName); return; }
 
     _showLoading(regionName);
-    _findPhotosForRegion(regionId, token, function (err, files) {
+
+    var fetchFn = provider === "microsoft" ? _findOneDrivePhotos : _findGooglePhotos;
+    fetchFn(regionId, token, function (err, files) {
       _showPhotos(regionName, files || [], token);
     });
   }

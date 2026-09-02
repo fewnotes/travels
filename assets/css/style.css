@@ -387,6 +387,8 @@ footer a {
 
 .signin-btn img { width: 18px; height: 18px; }
 
+.photo-login-prompt .signin-btn { display: flex; margin: 0.5rem auto; width: fit-content; }
+
 .photo-loading, .photo-empty {
   text-align: center;
   padding: 2rem;
