@@ -135,6 +135,55 @@
     if (cb) cb();
   }
 
+  function initHeaderAuth() {
+    var googleBtn = document.getElementById("auth-google-btn");
+    var msBtn = document.getElementById("auth-ms-btn");
+    var userDiv = document.getElementById("auth-user");
+    var avatar = document.getElementById("auth-avatar");
+    var nameEl = document.getElementById("auth-name");
+    var signoutBtn = document.getElementById("auth-signout-btn");
+
+    if (!googleBtn) return;
+
+    function showLoggedOut() {
+      googleBtn.style.display = "";
+      msBtn.style.display = "";
+      userDiv.style.display = "none";
+    }
+
+    function showLoggedIn(info) {
+      googleBtn.style.display = "none";
+      msBtn.style.display = "none";
+      userDiv.style.display = "";
+      nameEl.textContent = info.name || info.email;
+      if (info.picture) { avatar.src = info.picture; avatar.style.display = ""; }
+      else { avatar.style.display = "none"; }
+    }
+
+    showLoggedOut();
+
+    googleBtn.addEventListener("click", function () {
+      signInWithGoogle(function (err) { if (err) console.error(err); });
+    });
+
+    msBtn.addEventListener("click", function () {
+      signInWithMicrosoft(function (err) { if (err) console.error(err); });
+    });
+
+    signoutBtn.addEventListener("click", function () {
+      signOut(function () { showLoggedOut(); });
+    });
+
+    onLogin(function (info) { showLoggedIn(info); });
+  }
+
+  // Auto-init header when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initHeaderAuth);
+  } else {
+    initHeaderAuth();
+  }
+
   global.TravelsAuth = {
     signInWithGoogle: signInWithGoogle,
     signInWithMicrosoft: signInWithMicrosoft,

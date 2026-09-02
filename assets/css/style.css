@@ -389,6 +389,26 @@ footer a {
 
 .photo-login-prompt .signin-btn { display: flex; margin: 0.5rem auto; width: fit-content; }
 
+/* ── Header auth ──────────────────────────────────────────────────────────── */
+
+.auth-area { display: flex; align-items: center; gap: 0.5rem; }
+
+.auth-user { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+
+.auth-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+
+.signout-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.signout-btn:hover { color: var(--fg); border-color: var(--muted); }
+
 .photo-loading, .photo-empty {
   text-align: center;
   padding: 2rem;

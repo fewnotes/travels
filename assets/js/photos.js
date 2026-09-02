@@ -43,30 +43,9 @@
   }
 
   function _showLoginPrompt(regionName) {
-    _showModal(regionName, [
-      '<div class="photo-login-prompt">',
-      '  <p>Sign in to see photos for this region.</p>',
-      '  <button id="photo-google-signin" class="signin-btn google-btn">',
-      '    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">',
-      '    Sign in with Google',
-      '  </button>',
-      '  <button id="photo-ms-signin" class="signin-btn ms-btn">',
-      '    <img src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.png" alt="">',
-      '    Sign in with Microsoft',
-      '  </button>',
-      '</div>'
-    ].join(""));
-
-    document.getElementById("photo-google-signin").addEventListener("click", function () {
-      TravelsAuth.signInWithGoogle(function (err) {
-        if (!err) openPhotoModal(regionName, _currentRegionId);
-      });
-    });
-    document.getElementById("photo-ms-signin").addEventListener("click", function () {
-      TravelsAuth.signInWithMicrosoft(function (err) {
-        if (!err) openPhotoModal(regionName, _currentRegionId);
-      });
-    });
+    _showModal(regionName,
+      '<div class="photo-login-prompt"><p>Sign in using the button in the header to see photos.</p></div>'
+    );
   }
 
   function _showLoading(regionName) {
