@@ -124,10 +124,10 @@
     var cacheKey = "ms:" + regionId;
     if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
 
-    var folderPath = "/" + DRIVE_ROOT_NAME + "/" + PAGE_KEY + "/" + regionId;
-    _graphGet("/me/drive/root:/" + encodeURIComponent(DRIVE_ROOT_NAME) + "/" + PAGE_KEY + "/" + regionId + ":/children?$filter=file ne null&$select=id,name,file", token, function (err, data) {
-      if (err || !data.value) { cb(null, []); return; }
-      var images = (data.value || []).filter(function (f) {
+    var path = "/me/drive/root:/" + DRIVE_ROOT_NAME + "/" + PAGE_KEY + "/" + regionId + ":/children?$select=id,name,file";
+    _graphGet(path, token, function (err, data) {
+      if (err || !data || !data.value) { cb(null, []); return; }
+      var images = data.value.filter(function (f) {
         return f.file && f.file.mimeType && f.file.mimeType.indexOf("image/") === 0;
       });
       var mapped = images.map(function (f) {
