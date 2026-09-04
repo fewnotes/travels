@@ -82,9 +82,6 @@
   function _openLightbox(index) {
     _buildLightbox();
     _currentIndex = index;
-    var hasMultiple = _currentFiles.length > 1;
-    _lightbox.prevBtn.style.display = hasMultiple ? "" : "none";
-    _lightbox.nextBtn.style.display = hasMultiple ? "" : "none";
     _updateLightboxImage();
     _lightbox.overlay.style.display = "flex";
   }
@@ -95,8 +92,9 @@
 
   function _lightboxStep(delta) {
     var len = _currentFiles.length;
-    if (!len) return;
-    _currentIndex = (_currentIndex + delta + len) % len;
+    var next = _currentIndex + delta;
+    if (next < 0 || next >= len) return; // stop at the ends, don't wrap
+    _currentIndex = next;
     _updateLightboxImage();
   }
 
@@ -105,6 +103,8 @@
     if (!f) return;
     _lightbox.img.src = f.blobUrl || "";
     _lightbox.caption.textContent = f.date || "";
+    _lightbox.prevBtn.style.display = _currentIndex > 0 ? "" : "none";
+    _lightbox.nextBtn.style.display = _currentIndex < _currentFiles.length - 1 ? "" : "none";
   }
 
   function _showModal(regionName, content) {
@@ -209,90 +209,17 @@
     });
   }
 
-  // ── OneDrive (Microsoft Graph) API ────────────────────────────────────────
-
-  function _graphGet(path, token, cb) {
-    fetch("https://graph.microsoft.com/v1.0" + path, {
-      headers: { Authorization: "Bearer " + token }
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) { cb(null, data); })
-      .catch(function (e) { cb(e); });
-  }
-
-  function _mapOneDriveFiles(cacheKey, items, driveId) {
-    var images = items.filter(function (f) {
-      return f.file && f.file.mimeType && f.file.mimeType.indexOf("image/") === 0;
-    });
-    // Items found in someone else's drive (via the sharedWithMe fallback
-    // below) must be downloaded via /drives/{driveId}/items/{id}/content -
-    // /me/drive/items/{id}/content only resolves within the signer's own
-    // drive and would 404 for an id that lives in the owner's drive.
-    var base = driveId
-      ? "https://graph.microsoft.com/v1.0/drives/" + driveId + "/items/"
-      : "https://graph.microsoft.com/v1.0/me/drive/items/";
-    var mapped = images.map(function (f) {
-      var taken = f.photo && f.photo.takenDateTime;
-      return {
-        id: f.id,
-        name: f.name,
-        downloadUrl: base + f.id + "/content",
-        date: taken ? taken.substring(0, 7) : null
-      };
-    });
-    _driveFolderCache[cacheKey] = mapped;
-    return mapped;
-  }
-
-  function _findOneDrivePhotos(regionId, token, cb) {
-    var cacheKey = "ms:" + regionId;
-    if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
-
-    // First check whether ROOT_FOLDER_NAME was shared with this account -
-    // this is the common case (a family member with their own account).
-    // Graph doesn't expose shared items under /me/drive/root: at all, so
-    // this has to go through sharedWithMe, then browse by drive+item id.
-    _graphGet("/me/drive/sharedWithMe?allowexternal=true", token, function (err, shared) {
-      var match = (!err && shared && shared.value)
-        ? shared.value.filter(function (item) {
-            return item.name === ROOT_FOLDER_NAME && item.remoteItem && item.remoteItem.folder;
-          })[0]
-        : null;
-
-      if (match) {
-        var driveId = match.remoteItem.parentReference.driveId;
-        var itemId = match.remoteItem.id;
-        var sharedPath = "/drives/" + driveId + "/items/" + itemId + ":/" + regionId + ":/children?$select=id,name,file,photo";
-        _graphGet(sharedPath, token, function (err2, data2) {
-          if (err2 || !data2 || !data2.value) { cb(null, []); return; }
-          cb(null, _mapOneDriveFiles(cacheKey, data2.value, driveId));
-        });
-        return;
-      }
-
-      // Nothing shared under that name - fall back to the signed-in
-      // account's own drive (the folder's owner signing in on any page).
-      var ownPath = "/me/drive/root:/" + ROOT_FOLDER_NAME + "/" + regionId + ":/children?$select=id,name,file,photo";
-      _graphGet(ownPath, token, function (err3, data3) {
-        if (err3 || !data3 || !data3.value) { cb(null, []); return; }
-        cb(null, _mapOneDriveFiles(cacheKey, data3.value, null));
-      });
-    });
-  }
-
   // ── Public ────────────────────────────────────────────────────────────────
 
   function openPhotoModal(regionName, regionId) {
     _currentRegionId = regionId;
     var token = TravelsAuth.getToken();
-    var provider = TravelsAuth.getProvider();
 
     if (!token) { _showLoginPrompt(regionName); return; }
 
     _showLoading(regionName);
 
-    var fetchFn = provider === "microsoft" ? _findOneDrivePhotos : _findGooglePhotos;
-    fetchFn(regionId, token, function (err, files) {
+    _findGooglePhotos(regionId, token, function (err, files) {
       _showPhotos(regionName, files || [], token);
     });
   }

@@ -2,18 +2,12 @@
   "use strict";
 
   var GOOGLE_CLIENT_ID = "1054362225241-osudvt9it1hoej6a0v373qkmjh5ts0uc.apps.googleusercontent.com";
-  var MS_CLIENT_ID = "a0f846c3-77a9-4177-a978-b77bb4a8fa32";
-  var MS_AUTHORITY = "https://login.microsoftonline.com/consumers";
-  var MS_SCOPES = ["Files.Read", "User.Read"];
   // drive.readonly alone can't call the userinfo endpoint below - it needs
   // an identity scope too, or _fetchGoogleUserInfo gets a 401.
   var GOOGLE_SCOPE = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
-  var _provider = null;        // "google" | "microsoft"
+  var _provider = null;        // "google"
   var _googleToken = null;     // { access_token, expires_at }
-  var _msApp = null;           // MSAL PublicClientApplication
-  var _msAccount = null;       // MSAL account
-  var _msToken = null;         // { access_token, expires_at }
   var _userInfo = null;        // { name, email, picture }
   var _onLoginCallbacks = [];
 
@@ -22,8 +16,6 @@
   function getToken() {
     if (_provider === "google" && _googleToken && Date.now() < _googleToken.expires_at)
       return _googleToken.access_token;
-    if (_provider === "microsoft" && _msToken && Date.now() < _msToken.expires_at)
-      return _msToken.access_token;
     return null;
   }
 
@@ -77,69 +69,20 @@
     client.requestAccessToken({ prompt: "consent" });
   }
 
-  // ── Microsoft ─────────────────────────────────────────────────────────────
-
-  function _initMsal() {
-    if (_msApp) return _msApp;
-    _msApp = new msal.PublicClientApplication({
-      auth: {
-        clientId: MS_CLIENT_ID,
-        authority: MS_AUTHORITY,
-        redirectUri: window.location.origin + window.location.pathname
-      },
-      cache: { cacheLocation: "sessionStorage" }
-    });
-    return _msApp;
-  }
-
-  function signInWithMicrosoft(cb) {
-    if (typeof msal === "undefined") {
-      if (cb) cb(new Error("MSAL not loaded"));
-      return;
-    }
-    var app = _initMsal();
-    app.loginPopup({ scopes: MS_SCOPES })
-      .then(function (result) {
-        _msAccount = result.account;
-        return app.acquireTokenSilent({ scopes: MS_SCOPES, account: _msAccount });
-      })
-      .then(function (tokenResult) {
-        _provider = "microsoft";
-        _msToken = {
-          access_token: tokenResult.accessToken,
-          expires_at: tokenResult.expiresOn.getTime() - 60000
-        };
-        _userInfo = {
-          name: _msAccount.name,
-          email: _msAccount.username,
-          picture: null
-        };
-        _notifyLogin();
-        if (cb) cb(null, _userInfo);
-      })
-      .catch(function (e) { if (cb) cb(e); });
-  }
-
   // ── Sign out ──────────────────────────────────────────────────────────────
 
   function signOut(cb) {
     if (_provider === "google" && _googleToken && global.google) {
       google.accounts.oauth2.revoke(_googleToken.access_token, function () {});
     }
-    if (_provider === "microsoft" && _msApp && _msAccount) {
-      _msApp.logoutPopup({ account: _msAccount }).catch(function () {});
-    }
     _provider = null;
     _googleToken = null;
-    _msToken = null;
-    _msAccount = null;
     _userInfo = null;
     if (cb) cb();
   }
 
   function initHeaderAuth() {
     var googleBtn = document.getElementById("auth-google-btn");
-    var msBtn = document.getElementById("auth-ms-btn");
     var userDiv = document.getElementById("auth-user");
     var avatar = document.getElementById("auth-avatar");
     var nameEl = document.getElementById("auth-name");
@@ -149,13 +92,11 @@
 
     function showLoggedOut() {
       googleBtn.style.display = "";
-      msBtn.style.display = "";
       userDiv.style.display = "none";
     }
 
     function showLoggedIn(info) {
       googleBtn.style.display = "none";
-      msBtn.style.display = "none";
       userDiv.style.display = "";
       nameEl.textContent = info.name || info.email;
       if (info.picture) { avatar.src = info.picture; avatar.style.display = ""; }
@@ -166,10 +107,6 @@
 
     googleBtn.addEventListener("click", function () {
       signInWithGoogle(function (err) { if (err) console.error(err); });
-    });
-
-    msBtn.addEventListener("click", function () {
-      signInWithMicrosoft(function (err) { if (err) console.error(err); });
     });
 
     signoutBtn.addEventListener("click", function () {
@@ -188,7 +125,6 @@
 
   global.TravelsAuth = {
     signInWithGoogle: signInWithGoogle,
-    signInWithMicrosoft: signInWithMicrosoft,
     signOut: signOut,
     getToken: getToken,
     getProvider: getProvider,
