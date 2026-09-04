@@ -170,7 +170,18 @@
     _showModal(regionName, "");
     _modal.body.appendChild(strip);
 
+    var lastDate;
     files.forEach(function (f, index) {
+      // Files are pre-sorted by date, so a changed date means a new
+      // month - force a flex-wrap line break there, so a row never mixes
+      // photos from two different months.
+      if (index > 0 && f.date !== lastDate) {
+        var lineBreak = document.createElement("div");
+        lineBreak.className = "photo-strip-break";
+        strip.appendChild(lineBreak);
+      }
+      lastDate = f.date;
+
       var item = document.createElement("div");
       item.className = "photo-strip-item";
 
