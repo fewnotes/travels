@@ -21,6 +21,19 @@
 <body>
 <header class="site-header">
   <div class="header-right">
+    <div id="auth-area" class="auth-area">
+      <button id="auth-google-btn" class="signin-btn google-btn" style="display:none">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Google
+      </button>
+      <button id="auth-ms-btn" class="signin-btn ms-btn" style="display:none">
+        <img src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.png" alt="">Microsoft
+      </button>
+      <div id="auth-user" class="auth-user" style="display:none">
+        <img id="auth-avatar" class="auth-avatar" src="" alt="">
+        <span id="auth-name"></span>
+        <button id="auth-signout-btn" class="signout-btn">Sign out</button>
+      </div>
+    </div>
     <div class="seg-switch" role="group" aria-label="Page theme">
       <button id="theme-light-btn" type="button">☀ Light</button>
       <button id="theme-dark-btn" type="button">☾ Dark</button>
@@ -60,9 +73,13 @@
   <p>Data: US boundaries via <a href="https://github.com/topojson/us-atlas" target="_blank" rel="noopener">us-atlas</a> (ISC, US Census Bureau); Canadian boundaries via <a href="https://github.com/codeforgermany/click_that_hood" target="_blank" rel="noopener">click_that_hood</a> (MIT); world boundaries via <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a> (ISC, Natural Earth).</p>
 </footer>
 
-<script>var ASSET_BASE = "../";</script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="../assets/js/vendor/msal-browser.min.js"></script>
+<script>var ASSET_BASE = "../"; var TRAVELS_PAGE_KEY = "t";</script>
 <script src="../assets/js/vendor/d3.min.js"></script>
 <script src="../assets/js/data-t.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/photos.js"></script>
 <script src="../assets/js/map.js"></script>
 </body>
 </html>
