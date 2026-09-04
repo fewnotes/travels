@@ -12,7 +12,6 @@ var STATE_VISITED_IDS = [
   "US-California",
   "US-Nevada",
   "US-New-York",
-  "US-New-Jersey",
   "CA-British-Columbia",
   "CA-Yukon-Territory",
   "CA-Alberta",

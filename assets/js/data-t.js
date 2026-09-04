@@ -18,7 +18,6 @@ var STATE_VISITED_IDS = [
   "US-Arizona",
   "US-Utah",
   "US-New-York",
-  "US-New-Jersey",
   "US-Florida",
   "CA-British-Columbia"
 ];

@@ -9,7 +9,6 @@
 var STATE_VISITED_IDS = [
   "US-Hawaii",
   "US-New-York",
-  "US-New-Jersey",
   "US-Washington",
   "US-Oregon",
   "US-California",
