@@ -248,34 +248,34 @@
     var cacheKey = "ms:" + regionId;
     if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
 
-    // First try the signed-in account's own drive - this is what makes
-    // it work when the folder's owner signs in on any page: no sharing
-    // involved, since they own the whole tree themselves.
-    var ownPath = "/me/drive/root:/" + ROOT_FOLDER_NAME + "/" + regionId + ":/children?$select=id,name,file,photo";
-    _graphGet(ownPath, token, function (err, data) {
-      if (!err && data && data.value) {
-        cb(null, _mapOneDriveFiles(cacheKey, data.value, null));
-        return;
-      }
+    // First check whether ROOT_FOLDER_NAME was shared with this account -
+    // this is the common case (a family member with their own account).
+    // Graph doesn't expose shared items under /me/drive/root: at all, so
+    // this has to go through sharedWithMe, then browse by drive+item id.
+    _graphGet("/me/drive/sharedWithMe?allowexternal=true", token, function (err, shared) {
+      var match = (!err && shared && shared.value)
+        ? shared.value.filter(function (item) {
+            return item.name === ROOT_FOLDER_NAME && item.remoteItem && item.remoteItem.folder;
+          })[0]
+        : null;
 
-      // Not in their own drive (404/error) - this is a different person
-      // who only has ROOT_FOLDER_NAME shared with them. Graph doesn't
-      // expose shared items under /me/drive/root: at all, so find it via
-      // sharedWithMe instead, then browse by drive+item id.
-      _graphGet("/me/drive/sharedWithMe?allowexternal=true", token, function (err2, shared) {
-        if (err2 || !shared || !shared.value) { cb(null, []); return; }
-        var match = shared.value.filter(function (item) {
-          return item.name === ROOT_FOLDER_NAME && item.remoteItem && item.remoteItem.folder;
-        })[0];
-        if (!match) { cb(null, []); return; }
-
+      if (match) {
         var driveId = match.remoteItem.parentReference.driveId;
         var itemId = match.remoteItem.id;
         var sharedPath = "/drives/" + driveId + "/items/" + itemId + ":/" + regionId + ":/children?$select=id,name,file,photo";
-        _graphGet(sharedPath, token, function (err3, data3) {
-          if (err3 || !data3 || !data3.value) { cb(null, []); return; }
-          cb(null, _mapOneDriveFiles(cacheKey, data3.value, driveId));
+        _graphGet(sharedPath, token, function (err2, data2) {
+          if (err2 || !data2 || !data2.value) { cb(null, []); return; }
+          cb(null, _mapOneDriveFiles(cacheKey, data2.value, driveId));
         });
+        return;
+      }
+
+      // Nothing shared under that name - fall back to the signed-in
+      // account's own drive (the folder's owner signing in on any page).
+      var ownPath = "/me/drive/root:/" + ROOT_FOLDER_NAME + "/" + regionId + ":/children?$select=id,name,file,photo";
+      _graphGet(ownPath, token, function (err3, data3) {
+        if (err3 || !data3 || !data3.value) { cb(null, []); return; }
+        cb(null, _mapOneDriveFiles(cacheKey, data3.value, null));
       });
     });
   }
