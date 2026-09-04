@@ -3,11 +3,17 @@
 
   var PAGE_KEY = (typeof global.TRAVELS_PAGE_KEY === "string") ? global.TRAVELS_PAGE_KEY : "p";
   // Each person's photos live in their own top-level folder, e.g.
-  // "travels-map-t". This is what gets shared (read-only) with that
-  // person individually - a flat, uniquely-named folder is both easier
-  // to find by name via the provider APIs and avoids leaking siblings'
-  // photos the way sharing one common parent folder would.
-  var ROOT_FOLDER_NAME = "travels-map-" + PAGE_KEY;
+  // "travels-map-t" - shared (read-only) with that person individually,
+  // so a flat, uniquely-named folder both avoids leaking siblings' photos
+  // and is easy to find. Drive folder ids are permanent (stable across
+  // renames/moves/re-shares), so these are hardcoded rather than resolved
+  // by a "find folder named X" query on every region click.
+  var ROOT_FOLDER_IDS = {
+    p: "17TrTdUjiqUbFLx20_KA5Ua9nTGKzy10e",
+    s: "1SSJRqvWME94Fuqjre6-stx2VRVsgYNOl",
+    t: "160Pj8-fcsA8mscrAqheGPwJBWQZ4qRj2"
+  };
+  var ROOT_FOLDER_ID = ROOT_FOLDER_IDS[PAGE_KEY];
 
   var _modal = null;
   var _currentRegionId = null;
@@ -16,6 +22,21 @@
   var _lightbox = null;
   var _currentFiles = [];
   var _currentIndex = -1;
+  var _currentToken = null;
+
+  // Fetches the full-resolution image blob for a file on demand (used by
+  // the lightbox), rather than upfront for every photo in the strip - the
+  // strip only ever needs Drive's small pre-generated thumbnail.
+  function _ensureFullRes(f, cb) {
+    if (f.blobUrl) { cb(); return; }
+    fetch(f.downloadUrl, { headers: { Authorization: "Bearer " + _currentToken } })
+      .then(function (r) { return r.blob(); })
+      .then(function (blob) {
+        f.blobUrl = URL.createObjectURL(blob);
+        cb();
+      })
+      .catch(function () { cb(new Error("Could not load photo")); });
+  }
 
   // ── Modal UI ──────────────────────────────────────────────────────────────
 
@@ -101,10 +122,22 @@
   function _updateLightboxImage() {
     var f = _currentFiles[_currentIndex];
     if (!f) return;
-    _lightbox.img.src = f.blobUrl || "";
     _lightbox.caption.textContent = f.date || "";
     _lightbox.prevBtn.style.display = _currentIndex > 0 ? "" : "none";
     _lightbox.nextBtn.style.display = _currentIndex < _currentFiles.length - 1 ? "" : "none";
+
+    if (f.blobUrl) {
+      _lightbox.img.src = f.blobUrl;
+      return;
+    }
+    // Show the already-loaded thumbnail immediately, then swap to
+    // full-resolution once it arrives.
+    _lightbox.img.src = f.thumbnailUrl || "";
+    var openedIndex = _currentIndex;
+    _ensureFullRes(f, function (err) {
+      if (err || _currentIndex !== openedIndex) return; // navigated away before this resolved
+      _lightbox.img.src = f.blobUrl;
+    });
   }
 
   function _showModal(regionName, content) {
@@ -130,6 +163,7 @@
       return;
     }
     _currentFiles = files;
+    _currentToken = token;
 
     var strip = document.createElement("div");
     strip.className = "photo-strip";
@@ -155,16 +189,17 @@
       }
 
       strip.appendChild(item);
-      fetch(f.downloadUrl, { headers: { Authorization: "Bearer " + token } })
-        .then(function (r) { return r.blob(); })
-        .then(function (blob) {
-          f.blobUrl = URL.createObjectURL(blob);
+
+      if (f.thumbnailUrl) {
+        img.src = f.thumbnailUrl;
+      } else {
+        // No Drive-generated thumbnail for this file - fall back to the
+        // full-resolution fetch just for this one photo.
+        _ensureFullRes(f, function (err) {
+          if (err) { img.alt = "Could not load photo"; return; }
           img.src = f.blobUrl;
-          if (_lightbox && _lightbox.overlay.style.display === "flex" && _currentIndex === index) {
-            _updateLightboxImage();
-          }
-        })
-        .catch(function () { img.alt = "Could not load photo"; });
+        });
+      }
     });
   }
 
@@ -172,7 +207,7 @@
 
   function _driveQuery(q, token, cb) {
     var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) +
-      "&fields=files(id,name,mimeType,imageMediaMetadata(time))&pageSize=50";
+      "&fields=files(id,name,mimeType,imageMediaMetadata(time),thumbnailLink)&pageSize=50";
     fetch(url, { headers: { Authorization: "Bearer " + token } })
       .then(function (r) { return r.json(); })
       .then(function (data) { cb(null, data.files || []); })
@@ -183,28 +218,28 @@
     var cacheKey = "g:" + regionId;
     if (_driveFolderCache[cacheKey]) { cb(null, _driveFolderCache[cacheKey]); return; }
 
-    // Drive's files.list searches both files the signer owns and files
-    // shared with them by default, so a single name lookup finds
-    // ROOT_FOLDER_NAME whether this account owns it or someone else
-    // shared it with them - no separate "shared" path needed.
-    _driveQuery("name='" + ROOT_FOLDER_NAME + "' and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, roots) {
-      if (err || !roots.length) { cb(null, []); return; }
-      _driveQuery("name='" + regionId + "' and '" + roots[0].id + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, regions) {
-        if (err || !regions.length) { cb(null, []); return; }
-        _driveQuery("'" + regions[0].id + "' in parents and mimeType contains 'image/' and trashed=false", token, function (err, files) {
-          if (err) { cb(null, []); return; }
-          var mapped = files.map(function (f) {
-            var time = f.imageMediaMetadata && f.imageMediaMetadata.time;
-            return {
-              id: f.id,
-              name: f.name,
-              downloadUrl: "https://www.googleapis.com/drive/v3/files/" + f.id + "?alt=media",
-              date: time ? time.substring(0, 7).replace(":", "-") : null
-            };
-          });
-          _driveFolderCache[cacheKey] = mapped;
-          cb(null, mapped);
+    _driveQuery("name='" + regionId + "' and '" + ROOT_FOLDER_ID + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false", token, function (err, regions) {
+      if (err || !regions.length) { cb(null, []); return; }
+      _driveQuery("'" + regions[0].id + "' in parents and mimeType contains 'image/' and trashed=false", token, function (err, files) {
+        if (err) { cb(null, []); return; }
+        var mapped = files.map(function (f) {
+          var time = f.imageMediaMetadata && f.imageMediaMetadata.time;
+          return {
+            id: f.id,
+            name: f.name,
+            downloadUrl: "https://www.googleapis.com/drive/v3/files/" + f.id + "?alt=media",
+            thumbnailUrl: f.thumbnailLink || null,
+            date: time ? time.substring(0, 7).replace(":", "-") : null
+          };
         });
+        mapped.sort(function (a, b) {
+          if (!a.date && !b.date) return 0;
+          if (!a.date) return 1;
+          if (!b.date) return -1;
+          return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0);
+        });
+        _driveFolderCache[cacheKey] = mapped;
+        cb(null, mapped);
       });
     });
   }
