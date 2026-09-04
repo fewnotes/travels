@@ -5,7 +5,9 @@
   var MS_CLIENT_ID = "a0f846c3-77a9-4177-a978-b77bb4a8fa32";
   var MS_AUTHORITY = "https://login.microsoftonline.com/consumers";
   var MS_SCOPES = ["Files.Read", "User.Read"];
-  var GOOGLE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+  // drive.readonly alone can't call the userinfo endpoint below - it needs
+  // an identity scope too, or _fetchGoogleUserInfo gets a 401.
+  var GOOGLE_SCOPE = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
   var _provider = null;        // "google" | "microsoft"
   var _googleToken = null;     // { access_token, expires_at }
